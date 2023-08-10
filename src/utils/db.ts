@@ -1,5 +1,7 @@
 import { Collection, Db, MongoClient } from 'mongodb';
-require('dotenv').config();
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 class DBClient {
   private db: Db;

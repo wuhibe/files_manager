@@ -1,6 +1,9 @@
 import { createClient } from 'redis';
 import { RedisClientType } from '@redis/client';
-require('dotenv').config();
+import { RedisCommandArgument } from '@redis/client/dist/lib/commands';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 class RedisClient {
   private client: RedisClientType;
@@ -9,7 +12,7 @@ class RedisClient {
     const url = process.env.REDIS_URL || 'redis://localhost:6379';
 
     this.client = createClient({ url });
-    this.client.on('error', (err: any) => {
+    this.client.on('error', (err: Error) => {
       console.log(err);
     });
     this.client.connect();
@@ -23,7 +26,7 @@ class RedisClient {
     return await this.client.get(key);
   }
 
-  set(key: string, value: any, duration: number) {
+  set(key: string, value: number | RedisCommandArgument, duration: number) {
     this.client.set(key, value, { EX: duration });
   }
 
