@@ -1,4 +1,4 @@
-import { Collection, Db, MongoClient } from 'mongodb';
+import { Collection, Db, MongoClient, OptionalId } from 'mongodb';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -36,6 +36,14 @@ class DBClient {
 
   nbFiles() {
     return this.files.countDocuments();
+  }
+
+  insertUser(user: { email: string; password: string }) {
+    return this.users.insertOne(user as unknown as OptionalId<Document>);
+  }
+
+  findUserByEmail(email: string) {
+    return this.users.findOne({ email });
   }
 }
 const dbClient = new DBClient();

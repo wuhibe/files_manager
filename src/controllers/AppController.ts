@@ -18,4 +18,4 @@ async function getStats(req: Request, res: Response) {
   return res.status(200).send(stats);
 }
 
-export { getStatus, getStats };
+export default { getStatus, getStats };
