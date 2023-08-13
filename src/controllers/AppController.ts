@@ -1,6 +1,6 @@
+import { Request, Response } from 'express';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
-import { Request, Response } from 'express';
 
 function getStatus(req: Request, res: Response) {
   const status = {

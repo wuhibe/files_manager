@@ -1,5 +1,5 @@
-import { Collection, Db, MongoClient, OptionalId } from 'mongodb';
 import dotenv from 'dotenv';
+import { Collection, Db, MongoClient, ObjectId, OptionalId } from 'mongodb';
 
 dotenv.config();
 
@@ -44,6 +44,10 @@ class DBClient {
 
   findUserByEmail(email: string) {
     return this.users.findOne({ email });
+  }
+
+  findUserById(id: string) {
+    return this.users.findOne({ _id: new ObjectId(id) });
   }
 }
 const dbClient = new DBClient();
