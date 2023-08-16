@@ -1,6 +1,7 @@
 import express from 'express';
 import AppController from '../controllers/AppController';
 import AuthController from '../controllers/AuthController';
+import FilesController from '../controllers/FilesController';
 import UsersController from '../controllers/UsersController';
 
 const routes = express();
@@ -17,5 +18,11 @@ routes.get('/users/me', UsersController.getMe);
 // Auth
 routes.get('/connect', AuthController.getConnect);
 routes.get('/disconnect', AuthController.getDisconnect);
+
+// Middleware to authenticate all routes below
+routes.use(AuthController.userAuth);
+
+// Files
+routes.post('/files', FilesController.postUpload);
 
 export default routes;

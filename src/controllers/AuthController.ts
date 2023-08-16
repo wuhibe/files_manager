@@ -1,5 +1,5 @@
 import sha from 'sha1';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
@@ -56,4 +56,25 @@ async function getDisconnect(req: Request, res: Response) {
   return res.status(204).json();
 }
 
-export default { getConnect, getDisconnect };
+async function userAuth(req: Request, res: Response, next: NextFunction) {
+  const token = req.header('X-Token');
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const key = `auth_${token}`;
+  const userId = await redisClient.get(key);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user: any = await dbClient.findUserById(userId);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  req['user'] = { email: user.email, id: user._id };
+  next();
+}
+
+export default { getConnect, getDisconnect, userAuth };

@@ -49,6 +49,21 @@ class DBClient {
   findUserById(id: string) {
     return this.users.findOne({ _id: new ObjectId(id) });
   }
+
+  insertFile(file: {
+    userId: ObjectId;
+    name: string;
+    type: 'folder' | 'file' | 'image';
+    isPublic?: boolean;
+    parentId?: ObjectId | 0;
+    localPath?: string;
+  }) {
+    return this.users.insertOne(file as unknown as OptionalId<Document>);
+  }
+
+  findFileById(id: string) {
+    return this.files.findOne({ _id: new ObjectId(id) });
+  }
 }
 const dbClient = new DBClient();
 export default dbClient;
