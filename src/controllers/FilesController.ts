@@ -34,8 +34,7 @@ async function postUpload(req: Request, res: Response) {
     userId: user.id,
     name,
     type,
-    isPublic: isPublic || false,
-    parentId: parent?._id ?? 0,
+    isPublic: isPublic ? true : false,
   };
 
   if (type === 'file' || type === 'image') {
@@ -51,7 +50,9 @@ async function postUpload(req: Request, res: Response) {
     parentId: parent?._id ?? 0,
   });
 
-  return res.status(201).send({ ...fileDetails, id: file?.insertedId });
+  return res
+    .status(201)
+    .send({ ...fileDetails, id: file?.insertedId, parentId: parent?._id ?? 0 });
 }
 
 export default { postUpload };

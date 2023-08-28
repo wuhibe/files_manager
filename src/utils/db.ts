@@ -58,7 +58,7 @@ class DBClient {
     parentId?: ObjectId | 0;
     localPath?: string;
   }) {
-    return this.users.insertOne(file as unknown as OptionalId<Document>);
+    return this.files.insertOne(file as unknown as OptionalId<Document>);
   }
 
   findFileById(id: string) {
