@@ -18,41 +18,83 @@ async function postUpload(req: Request, res: Response) {
   if (!data && type !== 'folder')
     return res.status(400).send({ error: 'Missing data' });
 
-  const parent = parentId ? await dbClient.findFileById(parentId) : null;
-  if (parentId && !parent)
-    return res.status(400).send({ error: 'Parent not found' });
-  if (parent && parent['type'] !== 'folder')
-    return res.status(400).send({ error: 'Parent is not a folder' });
+  try {
+    const parent =
+      parentId && parentId !== '0'
+        ? await dbClient.findFileByIdOwner(parentId, user.id)
+        : null;
+    if (parentId && parentId !== '0' && !parent)
+      return res.status(400).send({ error: 'Parent not found' });
+    if (parent && parent['type'] !== 'folder')
+      return res.status(400).send({ error: 'Parent is not a folder' });
 
-  const fileId = uuidv4();
-  const path = process.env.FOLDER_PATH ?? '/tmp/files_manager';
-  if (!existsSync(path)) {
-    mkdirSync(path);
+    const fileId = uuidv4();
+    const path = process.env.FOLDER_PATH ?? '/tmp/files_manager';
+    if (!existsSync(path)) {
+      mkdirSync(path);
+    }
+
+    const fileDetails = {
+      userId: user.id,
+      name,
+      type,
+      isPublic: isPublic ? true : false,
+    };
+
+    if (type === 'file' || type === 'image') {
+      const localPath = `${path}/${fileId}`;
+      const decodedBuffer = Buffer.from(data, 'base64');
+      writeFileSync(localPath, decodedBuffer);
+      fileDetails['localPath'] = localPath;
+    }
+
+    const file = await dbClient.insertFile({
+      ...fileDetails,
+      parentId: parent?._id ?? 0,
+    });
+
+    return res.status(201).send({
+      ...fileDetails,
+      id: file?.insertedId,
+      parentId: parent?._id ?? 0,
+    });
+  } catch (error) {
+    return res.status(500).json(error);
   }
-
-  const fileDetails = {
-    userId: user.id,
-    name,
-    type,
-    isPublic: isPublic ? true : false,
-  };
-
-  if (type === 'file' || type === 'image') {
-    const localPath = `${path}/${fileId}`;
-    const decodedBuffer = Buffer.from(data, 'base64');
-    const decodedString = decodedBuffer.toString('utf-8');
-    writeFileSync(localPath, decodedString);
-    fileDetails['localPath'] = localPath;
-  }
-
-  const file = await dbClient.insertFile({
-    ...fileDetails,
-    parentId: parent?._id ?? 0,
-  });
-
-  return res
-    .status(201)
-    .send({ ...fileDetails, id: file?.insertedId, parentId: parent?._id ?? 0 });
 }
 
-export default { postUpload };
+async function getIndex(req: Request, res: Response) {
+  const user: { email: string; id: ObjectId } = req['user'];
+  const parentId = req.query.parentId?.toString() ?? 0;
+  const page = req.query.page?.toString() ?? 0;
+  try {
+    const parent = parentId
+      ? await dbClient.findFileByIdOwner(parentId, user.id)
+      : null;
+    if (parentId && !parent)
+      return res.status(200).send({ error: 'Parent not found' });
+    if (parent && parent['type'] !== 'folder')
+      return res.status(400).send({ error: 'Parent is not a folder' });
+
+    const files = await dbClient.getFilesList(user, parent, page);
+
+    return res.status(200).send(files);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
+
+async function getShow(req: Request, res: Response) {
+  const user: { email: string; id: ObjectId } = req['user'];
+  const fileId = req.params.id;
+  try {
+    const file = await dbClient.findFileByIdOwner(fileId, user.id);
+    if (!file) return res.status(404).send({ error: 'Not found' });
+
+    return res.status(200).send(file);
+  } catch (error) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+}
+
+export default { postUpload, getIndex, getShow };

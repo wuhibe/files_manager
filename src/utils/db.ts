@@ -61,8 +61,31 @@ class DBClient {
     return this.files.insertOne(file as unknown as OptionalId<Document>);
   }
 
-  findFileById(id: string) {
-    return this.files.findOne({ _id: new ObjectId(id) });
+  findFileByIdOwner(id: string, userId: ObjectId) {
+    return this.files.findOne({ _id: new ObjectId(id), userId });
+  }
+
+  getFilesList(
+    user: { id: ObjectId },
+    parent: { _id: ObjectId },
+    page: string | 0,
+  ) {
+    return this.files
+      .aggregate([
+        {
+          $match: {
+            userId: user.id,
+            parentId: parent?._id ?? 0,
+          },
+        },
+        {
+          $skip: page ? Number(page) * 20 : 0,
+        },
+        {
+          $limit: 20,
+        },
+      ])
+      .toArray();
   }
 }
 const dbClient = new DBClient();

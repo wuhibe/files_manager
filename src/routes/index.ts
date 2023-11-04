@@ -5,7 +5,7 @@ import FilesController from '../controllers/FilesController';
 import UsersController from '../controllers/UsersController';
 
 const routes = express();
-routes.use(express.json());
+routes.use(express.json({ limit: '50mb' }));
 
 // AppInfo
 routes.get('/stats', AppController.getStats);
@@ -24,5 +24,7 @@ routes.use(AuthController.userAuth);
 
 // Files
 routes.post('/files', FilesController.postUpload);
+routes.get('/files/:id', FilesController.getShow);
+routes.get('/files', FilesController.getIndex);
 
 export default routes;
