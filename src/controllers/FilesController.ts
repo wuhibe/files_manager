@@ -97,4 +97,42 @@ async function getShow(req: Request, res: Response) {
   }
 }
 
-export default { postUpload, getIndex, getShow };
+async function putPublish(req: Request, res: Response) {
+  const user: { email: string; id: ObjectId } = req['user'];
+  const fileId = req.params.id;
+  try {
+    const file = await dbClient.findFileByIdOwner(fileId, user.id);
+    if (!file) return res.status(404).send({ error: 'Not found' });
+
+    const updatedFile = await dbClient.updateFileById(fileId, {
+      isPublic: true,
+    });
+
+    return res
+      .status(200)
+      .send({ ...file, isPublic: updatedFile.matchedCount === 1 ? true : false });
+  } catch (error) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+}
+
+async function putUnpublish(req: Request, res: Response) {
+  const user: { email: string; id: ObjectId } = req['user'];
+  const fileId = req.params.id;
+  try {
+    const file = await dbClient.findFileByIdOwner(fileId, user.id);
+    if (!file) return res.status(404).send({ error: 'Not found' });
+
+    const updatedFile = await dbClient.updateFileById(fileId, {
+      isPublic: false,
+    });
+
+    return res
+      .status(200)
+      .send({ ...file, isPublic: updatedFile.matchedCount === 1 ? false : true });
+  } catch (error) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+}
+
+export default { postUpload, getIndex, getShow, putPublish, putUnpublish };

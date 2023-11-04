@@ -87,6 +87,10 @@ class DBClient {
       ])
       .toArray();
   }
+
+  updateFileById(id: string, data: { isPublic: boolean }) {
+    return this.files.updateOne({ _id: new ObjectId(id) }, { $set: data });
+  }
 }
 const dbClient = new DBClient();
 export default dbClient;
