@@ -65,6 +65,10 @@ class DBClient {
     return this.files.findOne({ _id: new ObjectId(id), userId });
   }
 
+  findPublicFileById(id: string) {
+    return this.files.findOne({ _id: new ObjectId(id), isPublic: true });
+  }
+
   getFilesList(
     user: { id: ObjectId },
     parent: { _id: ObjectId },

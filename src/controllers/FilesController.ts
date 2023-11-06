@@ -4,6 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import dotenv from 'dotenv';
 import dbClient from '../utils/db';
+import { userCheck } from '../utils/helpers';
+import { lookup } from 'mime-types';
+import { join } from 'path';
 
 dotenv.config();
 
@@ -108,9 +111,10 @@ async function putPublish(req: Request, res: Response) {
       isPublic: true,
     });
 
-    return res
-      .status(200)
-      .send({ ...file, isPublic: updatedFile.matchedCount === 1 ? true : false });
+    return res.status(200).send({
+      ...file,
+      isPublic: updatedFile.matchedCount === 1 ? true : false,
+    });
   } catch (error) {
     return res.status(404).send({ error: 'Not found' });
   }
@@ -127,12 +131,43 @@ async function putUnpublish(req: Request, res: Response) {
       isPublic: false,
     });
 
-    return res
-      .status(200)
-      .send({ ...file, isPublic: updatedFile.matchedCount === 1 ? false : true });
+    return res.status(200).send({
+      ...file,
+      isPublic: updatedFile.matchedCount === 1 ? false : true,
+    });
   } catch (error) {
     return res.status(404).send({ error: 'Not found' });
   }
 }
 
-export default { postUpload, getIndex, getShow, putPublish, putUnpublish };
+async function getFile(req: Request, res: Response) {
+  req = await userCheck(req);
+  const user: { email: string; id: ObjectId } = req['user'];
+  const fileId = req.params.id;
+  try {
+    let file;
+    if (user)
+      file = await dbClient.findFileByIdOwner(fileId, new ObjectId(user.id));
+    else file = await dbClient.findPublicFileById(fileId);
+    if (!file) return res.status(404).send({ error: 'Not found' });
+    if (file.type === 'folder') {
+      return res.status(400).send({ error: "A folder doesn't have content" });
+    }
+    const mime = lookup(file.name);
+    return res
+      .status(200)
+      .contentType(mime ? mime : 'text/plain')
+      .sendFile(join(__dirname, '..', '..', file.localPath));
+  } catch (error) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+}
+
+export default {
+  postUpload,
+  getIndex,
+  getShow,
+  putPublish,
+  putUnpublish,
+  getFile,
+};

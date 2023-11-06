@@ -19,6 +19,9 @@ routes.get('/users/me', UsersController.getMe);
 routes.get('/connect', AuthController.getConnect);
 routes.get('/disconnect', AuthController.getDisconnect);
 
+// Files without authentication
+routes.get('/files/:id/data', FilesController.getFile);
+
 // Middleware to authenticate all routes below
 routes.use(AuthController.userAuth);
 
